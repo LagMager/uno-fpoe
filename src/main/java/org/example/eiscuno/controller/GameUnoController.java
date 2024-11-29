@@ -8,6 +8,8 @@ import javafx.scene.layout.GridPane;
 import org.example.eiscuno.model.card.Card;
 import org.example.eiscuno.model.deck.Deck;
 import org.example.eiscuno.model.game.GameUno;
+import org.example.eiscuno.model.machine.ThreadPlayMachine;
+import org.example.eiscuno.model.machine.ThreadSingUNOMachine;
 import org.example.eiscuno.model.player.Player;
 import org.example.eiscuno.model.table.Table;
 
@@ -32,6 +34,9 @@ public class GameUnoController {
     private GameUno gameUno;
     private int posInitCardToShow;
 
+    private ThreadSingUNOMachine threadSingUNOMachine;
+    private ThreadPlayMachine threadPlayMachine;
+
     /**
      * Initializes the controller.
      */
@@ -40,6 +45,13 @@ public class GameUnoController {
         initVariables();
         this.gameUno.startGame();
         printCardsHumanPlayer();
+
+        threadSingUNOMachine = new ThreadSingUNOMachine(this.humanPlayer.getCardsPlayer());
+        Thread t = new Thread(threadSingUNOMachine, "ThreadSingUNO");
+        t.start();
+
+        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView);
+        threadPlayMachine.start();
     }
 
     /**
@@ -70,6 +82,7 @@ public class GameUnoController {
                 gameUno.playCard(card);
                 tableImageView.setImage(card.getImage());
                 humanPlayer.removeCard(findPosCardsHumanPlayer(card));
+                threadPlayMachine.setHasPlayerPlayed(true);
                 printCardsHumanPlayer();
             });
 
