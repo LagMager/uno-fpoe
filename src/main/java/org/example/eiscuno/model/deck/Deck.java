@@ -62,9 +62,18 @@ public class Deck {
             return "8";
         } else if (name.endsWith("9")){
             return "9";
+        } else if (name.startsWith("TWO_WILD_DRAW_")){
+            return "TWO_WILD_DRAW";
+        } else if (name.startsWith("RESERVE")){
+            return "RESERVE";
+        } else if (name.startsWith("SKIP")){
+            return "SKIP";
+        } else if (name.equals("FOUR_WILD_DRAW")){
+            return "FOUR_WILD_DRAW";
+        } else if (name.equals("WILD")){
+            return "WILD";
         } else {
-            return null;
-        }
+            return null;}
 
     }
 
@@ -77,6 +86,18 @@ public class Deck {
             return "BLUE";
         } else if(name.startsWith("RED")){
             return "RED";
+        } else if (name.endsWith("GREEN")) {
+            return "GREEN";
+        } else if (name.endsWith("YELLOW")) {
+            return "YELLOW";
+        } else if (name.endsWith("RED")) {
+            return "RED";
+        } else if (name.endsWith("BLUE")) {
+            return "BLUE";
+        }else if (name.equals("FOUR_WILD_DRAW")){
+            return "FOUR_WILD_DRAW";
+        } else if (name.equals("WILD")) {
+            return "WILD";
         } else {
             return null;
         }

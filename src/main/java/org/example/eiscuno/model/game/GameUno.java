@@ -44,6 +44,8 @@ public class GameUno implements IGameUno {
                 machinePlayer.addCard(this.deck.takeCard());
             }
         }
+        table.addCardOnTheTable(this.deck.takeCard());
+
     }
 
     /**
@@ -101,6 +103,20 @@ public class GameUno implements IGameUno {
 
         return cards;
     }
+    public Card getTableCard() {
+        return table.getCurrentCardOnTheTable();
+    }
+
+    public boolean validCard(Card PlayedCard, Card TableCard) {
+        if (TableCard != null) {
+            /* Make sure to add this once WILD card and FOUR WILD DRAW functionality is added. */
+           /* if(PlayedCard.getValue().equals("WILD") || PlayedCard.getValue().equals("FOUR_WILD_DRAW")) {
+                return true;
+            } */
+            return PlayedCard.getValue().equals(TableCard.getValue()) || PlayedCard.getColor().equals(TableCard.getColor());
+        }
+        return true;
+    }
 
     /**
      * Checks if the game is over.
@@ -109,6 +125,7 @@ public class GameUno implements IGameUno {
      */
     @Override
     public Boolean isGameOver() {
-        return null;
+        return false;
     }
+
 }
