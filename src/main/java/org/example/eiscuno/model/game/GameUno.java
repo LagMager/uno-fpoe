@@ -15,15 +15,6 @@ public class GameUno implements IGameUno {
     private Player machinePlayer;
     private Deck deck;
     private Table table;
-    private boolean isReversed;
-    private Player currentPlayer;
-    private Player nextPlayer;
-
-    private static final String SKIP = "SKIP";
-    private static final String REVERSE = "REVERSE";
-    private static final String DRAW_TWO = "DRAW_TWO";
-    private static final String WILD = "WILD";
-    private static final String WILD_DRAW_FOUR = "WILD_DRAW_FOUR";
 
     /**
      * Constructs a new GameUno instance.
@@ -38,9 +29,6 @@ public class GameUno implements IGameUno {
         this.machinePlayer = machinePlayer;
         this.deck = deck;
         this.table = table;
-        this.isReversed = false;
-        this.currentPlayer = humanPlayer;
-        this.nextPlayer = machinePlayer;
     }
 
     /**
@@ -56,6 +44,8 @@ public class GameUno implements IGameUno {
                 machinePlayer.addCard(this.deck.takeCard());
             }
         }
+        table.addCardOnTheTable(this.deck.takeCard());
+
     }
 
     /**
@@ -78,63 +68,7 @@ public class GameUno implements IGameUno {
      */
     @Override
     public void playCard(Card card) {
-        if(!canPlayCard(card)) {
-            return;
-        }
-
-        table.addCardOnTheTable(card);
-        handleSpecialCard(card);
-        switchPlayers();
-    }
-
-    public boolean canPlayCard(Card card) {
-        try {
-            Card topCard = table.getCurrentCardOnTheTable();
-            if (card.getCardType() != null &&
-                    (card.getCardType().equals(WILD) ||
-                            card.getCardType().equals(WILD_DRAW_FOUR))) {
-                return true;
-            }
-            return card.getColor().equals(topCard.getColor()) ||
-                    (card.getValue() != null && card.getValue().equals(topCard.getValue())) ||
-                    (card.getCardType() != null && card.getCardType().equals(topCard.getCardType()));
-        } catch (IndexOutOfBoundsException e) {
-            return true;
-        }
-    }
-
-    private void handleSpecialCard(Card card) {
-        String cardType = card.getCardType();
-        if(cardType == null) return;
-
-        switch (cardType){
-            case SKIP:
-                switchPlayers();
-                break;
-            case REVERSE:
-                isReversed = !isReversed;
-                Player temp = nextPlayer;
-                nextPlayer = currentPlayer;
-                currentPlayer = temp;
-                break;
-            case DRAW_TWO:
-                eatCard(nextPlayer, 2);
-                switchPlayers();
-                break;
-            case WILD_DRAW_FOUR:
-                eatCard(nextPlayer, 4);
-                switchPlayers();
-                break;
-            case WILD:
-                switchPlayers();
-                break;
-        }
-    }
-
-    private void switchPlayers() {
-        Player temp = currentPlayer;
-        currentPlayer = nextPlayer;
-        nextPlayer = temp;
+        this.table.addCardOnTheTable(card);
     }
 
     /**
@@ -169,6 +103,20 @@ public class GameUno implements IGameUno {
 
         return cards;
     }
+    public Card getTableCard() {
+        return table.getCurrentCardOnTheTable();
+    }
+
+    public boolean validCard(Card PlayedCard, Card TableCard) {
+        if (TableCard != null) {
+            /* Make sure to add this once WILD card and FOUR WILD DRAW functionality is added. */
+           /* if(PlayedCard.getValue().equals("WILD") || PlayedCard.getValue().equals("FOUR_WILD_DRAW")) {
+                return true;
+            } */
+            return PlayedCard.getValue().equals(TableCard.getValue()) || PlayedCard.getColor().equals(TableCard.getColor());
+        }
+        return true;
+    }
 
     /**
      * Checks if the game is over.
@@ -177,13 +125,7 @@ public class GameUno implements IGameUno {
      */
     @Override
     public Boolean isGameOver() {
-        return humanPlayer.getCardsPlayer().isEmpty() ||
-                machinePlayer.getCardsPlayer().isEmpty() ||
-                deck.isEmpty();
+        return false;
     }
-
-    public Player getCurrentPlayer() {return currentPlayer;}
-
-    public Player getNextPlayer() {return nextPlayer;}
 
 }
