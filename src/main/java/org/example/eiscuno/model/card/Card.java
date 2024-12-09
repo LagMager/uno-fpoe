@@ -12,6 +12,7 @@ public class Card {
     private String color;
     private Image image;
     private ImageView cardImageView;
+    private String cardType;
 
     /**
      * Constructs a Card with the specified image URL and name.
@@ -19,13 +20,15 @@ public class Card {
      * @param url the URL of the card image
      * @param value of the card
      */
-    public Card(String url, String value, String color) {
+    public Card(String url, String value, String color, String cardType) {
         this.url = url;
         this.value = value;
         this.color = color;
+        this.cardType = cardType;
         this.image = new Image(String.valueOf(getClass().getResource(url)));
         this.cardImageView = createCardImageView();
     }
+
 
     /**
      * Creates and configures the ImageView for the card.
@@ -64,5 +67,17 @@ public class Card {
 
     public String getColor() {
         return color;
+    }
+
+    public String getCardType() {return cardType; }
+
+    public boolean canPlayOn(Card topCard) {
+        if (this.cardType.equals("WILD") || this.cardType.equals("WILD_DRAW_FOUR")) {
+            return true;
+        }
+
+        return this.color.equals(topCard.getColor()) ||
+                (this.value != null && this.value.equals(topCard.getValue())) ||
+                this.cardType.equals(topCard.getCardType());
     }
 }
