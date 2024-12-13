@@ -15,6 +15,15 @@ public class GameUno implements IGameUno {
     private Player machinePlayer;
     private Deck deck;
     private Table table;
+    private boolean isReversed;
+    private Player currentPlayer;
+    private Player nextPlayer;
+
+    private static final String SKIP = "SKIP";
+    private static final String REVERSE = "REVERSE";
+    private static final String DRAW_TWO = "DRAW_TWO";
+    private static final String WILD = "WILD";
+    private static final String WILD_DRAW_FOUR = "WILD_DRAW_FOUR";
 
     /**
      * Constructs a new GameUno instance.
@@ -29,6 +38,9 @@ public class GameUno implements IGameUno {
         this.machinePlayer = machinePlayer;
         this.deck = deck;
         this.table = table;
+        this.isReversed = false;
+        this.currentPlayer = humanPlayer;
+        this.nextPlayer = machinePlayer;
     }
 
     /**
@@ -66,7 +78,49 @@ public class GameUno implements IGameUno {
      */
     @Override
     public void playCard(Card card) {
-        this.table.addCardOnTheTable(card);
+        if(!canPlayCard(card)) {
+            return;
+        }
+
+        table.addCardOnTheTable(card);
+        handleSpecialCard(card);
+        switchPlayers();
+    }
+
+    public boolean canPlayCard(Card card) {
+        try {
+            Card topCard = table.getCurrentCardOnTheTable();
+            return card.canPlayOn(topCard);
+        } catch (IndexOutOfBoundsException e) {
+            return true;
+        }
+    }
+
+    private void handleSpecialCard(Card card) {
+        String cardType = card.getCardType();
+        if(cardType == null) return;
+
+        switch (cardType){
+            case SKIP:
+                switchPlayers();
+                break;
+            case REVERSE:
+                isReversed = !isReversed;
+                Player temp = nextPlayer;
+                nextPlayer = currentPlayer;
+                currentPlayer = temp;
+                break;
+            case DRAW_TWO:
+                eatCard(nextPlayer, 2);
+                switchPlayers();
+                break;
+        }
+    }
+
+    private void switchPlayers() {
+        Player temp = currentPlayer;
+        currentPlayer = nextPlayer;
+        nextPlayer = temp;
     }
 
     /**
@@ -109,6 +163,13 @@ public class GameUno implements IGameUno {
      */
     @Override
     public Boolean isGameOver() {
-        return null;
+        return humanPlayer.getCardsPlayer().isEmpty() ||
+                machinePlayer.getCardsPlayer().isEmpty() ||
+                deck.isEmpty();
     }
+
+    public Player getCurrentPlayer() {return currentPlayer;}
+
+    public Player getNextPlayer() {return nextPlayer;}
+
 }
