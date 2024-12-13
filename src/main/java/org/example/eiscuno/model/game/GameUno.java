@@ -90,7 +90,14 @@ public class GameUno implements IGameUno {
     public boolean canPlayCard(Card card) {
         try {
             Card topCard = table.getCurrentCardOnTheTable();
-            return card.canPlayOn(topCard);
+            if (card.getCardType() != null &&
+                    (card.getCardType().equals(WILD) ||
+                            card.getCardType().equals(WILD_DRAW_FOUR))) {
+                return true;
+            }
+            return card.getColor().equals(topCard.getColor()) ||
+                    (card.getValue() != null && card.getValue().equals(topCard.getValue())) ||
+                    (card.getCardType() != null && card.getCardType().equals(topCard.getCardType()));
         } catch (IndexOutOfBoundsException e) {
             return true;
         }
@@ -112,6 +119,13 @@ public class GameUno implements IGameUno {
                 break;
             case DRAW_TWO:
                 eatCard(nextPlayer, 2);
+                switchPlayers();
+                break;
+            case WILD_DRAW_FOUR:
+                eatCard(nextPlayer, 4);
+                switchPlayers();
+                break;
+            case WILD:
                 switchPlayers();
                 break;
         }
