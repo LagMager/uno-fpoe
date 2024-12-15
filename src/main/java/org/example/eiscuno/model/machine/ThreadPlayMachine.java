@@ -45,6 +45,14 @@ public class ThreadPlayMachine extends Thread {
                 }
                 aiPlayerStrategy.playTurn(machinePlayer, table, deck, tableImageView);
                 hasPlayerPlayed.set(aiPlayerStrategy.getGameUno().getCurrentPlayer().equals(machinePlayer));
+
+
+                Platform.runLater(() -> {
+                    if (machinePlayer.getCardsPlayer().isEmpty() || deck.isEmpty()){
+                        gameUnoController.checkGameOver();
+                    }
+                });
+
                 System.out.println("------------------");
                 System.out.println("Player played set to: " + hasPlayerPlayed.get());
                 System.out.println("------------------");

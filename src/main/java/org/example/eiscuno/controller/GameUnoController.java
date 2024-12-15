@@ -1,9 +1,13 @@
 package org.example.eiscuno.controller;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Stage;
 import org.example.eiscuno.model.card.Card;
 import org.example.eiscuno.model.deck.Deck;
 import org.example.eiscuno.model.game.GameUno;
@@ -84,6 +88,14 @@ public class GameUnoController {
         this.gridPaneCardsPlayer.getChildren().clear();
     }
 
+
+    // Fetches the currently visible cards for the human player
+    private Card[] fetchVisibleCardsForHumanPlayer() {
+        return this.gameUno.getCurrentVisibleCardsHumanPlayer(this.posInitCardToShow);
+    }
+
+=======
+
     // Fetches the currently visible cards for the human player
     private Card[] fetchVisibleCardsForHumanPlayer() {
         return this.gameUno.getCurrentVisibleCardsHumanPlayer(this.posInitCardToShow);
@@ -120,11 +132,24 @@ public class GameUnoController {
         }
     }
 
+
+
+=======
     // Processes the actions for playing a valid card
+
     private void processValidCardPlay(Card card) {
         gameUno.playCard(card);
         tableImageView.setImage(card.getImage());
         humanPlayer.removeCard(findPosCardsHumanPlayer(card));
+
+        checkGameOver();
+        if (gameUno.getCurrentPlayer().equals(machinePlayer)) {
+            threadPlayMachine.setHasPlayerPlayed(true);
+        }
+        printCardsHumanPlayer();
+    }
+
+=======
         if (gameUno.getCurrentPlayer().equals(machinePlayer)) {
             threadPlayMachine.setHasPlayerPlayed(true);
         }
@@ -132,6 +157,7 @@ public class GameUnoController {
     }
 
     // Adds a card to the player's grid at a specific position
+
     private void addCardToGrid(ImageView cardImageView, int position) {
         this.gridPaneCardsPlayer.add(cardImageView, position, 0);
     }
@@ -194,6 +220,9 @@ public class GameUnoController {
             }
             else {
                 System.out.println("Deck is empty!");
+
+                checkGameOver();
+
             }
             gameUno.cardTaken();
             threadPlayMachine.setHasPlayerPlayed(true);
@@ -211,5 +240,75 @@ public class GameUnoController {
     @FXML
     void onHandleUno(ActionEvent event) {
         // Implement logic to handle Uno event here
+    }
+
+    public void checkGameOver(){
+        String winner = null;
+        if(humanPlayer.getCardsPlayer().isEmpty()){
+            winner = "Felicidades! Has ganado la partida";
+        } else if (machinePlayer.getCardsPlayer().isEmpty()) {
+            winner = "La máquina a ganado la partida.";
+            
+        } else if (deck.isEmpty()) {
+            if(humanPlayer.getCardsPlayer().size() < machinePlayer.getCardsPlayer().size()){
+                winner = "Felicidades! Has ganado la partida";
+            } else if (machinePlayer.getCardsPlayer().size() < humanPlayer.getCardsPlayer().size()) {
+                winner = "La máquina a ganado la partida.";
+                
+            } else {
+                winner = "Empate! Tienen el mismo numéro de cartas.";
+            }
+
+        }
+        if(winner != null){
+            showGameOverDialog(winner);
+
+        }
+    }
+
+    private void showGameOverDialog(String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Fin del Juego");
+            alert.setHeaderText(message);
+            alert.setContentText("¿Qué deseas hacer?");
+
+            ButtonType restartButton = new ButtonType("Reiniciar Juego");
+            ButtonType exitButton = new ButtonType("Salir");
+
+            alert.getButtonTypes().setAll(restartButton, exitButton);
+
+            alert.showAndWait().ifPresent(response -> {
+                if (response == restartButton) {
+                    restartGame();
+                } else {
+                    Platform.exit();
+                }
+            });
+        });
+    }
+
+
+    private void restartGame() {
+        if (threadPlayMachine != null) {
+            threadPlayMachine.interrupt();
+        }
+        if (threadSingUNOMachine != null) {
+            Thread.currentThread().interrupt();
+        }
+
+        initVariables();
+        this.gameUno.startGame();
+        tableImageView.setImage(table.getCurrentCardOnTheTable().getImage());
+        printCardsHumanPlayer();
+
+        threadSingUNOMachine = new ThreadSingUNOMachine(this.humanPlayer.getCardsPlayer());
+        Thread t = new Thread(threadSingUNOMachine, "ThreadSingUNO");
+        t.start();
+
+        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView, this.deck,
+                this.strategy, this, this.gameUno);
+        threadPlayMachine.start();
+
     }
 }
