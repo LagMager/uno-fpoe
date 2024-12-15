@@ -3,11 +3,11 @@ package org.example.eiscuno.controller;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import org.example.eiscuno.model.card.Card;
 import org.example.eiscuno.model.deck.Deck;
 import org.example.eiscuno.model.game.GameUno;
+import org.example.eiscuno.model.machine.BasicAIPlayerStrategy;
 import org.example.eiscuno.model.machine.ThreadPlayMachine;
 import org.example.eiscuno.model.machine.ThreadSingUNOMachine;
 import org.example.eiscuno.model.player.Player;
@@ -29,6 +29,7 @@ public class GameUnoController {
 
     private Player humanPlayer;
     private Player machinePlayer;
+    private BasicAIPlayerStrategy strategy = new BasicAIPlayerStrategy();
     private Deck deck;
     private Table table;
     private GameUno gameUno;
@@ -44,13 +45,15 @@ public class GameUnoController {
     public void initialize() {
         initVariables();
         this.gameUno.startGame();
+        tableImageView.setImage(table.getCurrentCardOnTheTable().getImage());
         printCardsHumanPlayer();
-
+        System.out.println("GAME START!");
         threadSingUNOMachine = new ThreadSingUNOMachine(this.humanPlayer.getCardsPlayer());
         Thread t = new Thread(threadSingUNOMachine, "ThreadSingUNO");
         t.start();
 
-        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView);
+        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView, this.deck,
+                this.strategy, this, this.gameUno);
         threadPlayMachine.start();
     }
 
@@ -66,29 +69,71 @@ public class GameUnoController {
         this.posInitCardToShow = 0;
     }
 
-    /**
-     * Prints the human player's cards on the grid pane.
-     */
-    private void printCardsHumanPlayer() {
+
+    // Entry point for updating the human player's visible cards
+    public void printCardsHumanPlayer() {
+        clearCardGrid();
+        Card[] visibleCards = fetchVisibleCardsForHumanPlayer();
+        Card currentTableCard = fetchCurrentTableCard();
+
+        renderPlayerCards(visibleCards, currentTableCard);
+    }
+
+    // Clears the grid displaying the player's cards
+    private void clearCardGrid() {
         this.gridPaneCardsPlayer.getChildren().clear();
-        Card[] currentVisibleCardsHumanPlayer = this.gameUno.getCurrentVisibleCardsHumanPlayer(this.posInitCardToShow);
+    }
 
-        for (int i = 0; i < currentVisibleCardsHumanPlayer.length; i++) {
-            Card card = currentVisibleCardsHumanPlayer[i];
+    // Fetches the currently visible cards for the human player
+    private Card[] fetchVisibleCardsForHumanPlayer() {
+        return this.gameUno.getCurrentVisibleCardsHumanPlayer(this.posInitCardToShow);
+    }
+
+    // Fetches the current card on the table
+    private Card fetchCurrentTableCard() {
+        return this.table.getCurrentCardOnTheTable();
+    }
+
+    // Renders the player's visible cards and attaches click event handlers
+    private void renderPlayerCards(Card[] cards, Card currentTableCard) {
+        for (int i = 0; i < cards.length; i++) {
+            Card card = cards[i];
             ImageView cardImageView = card.getCard();
-
-            cardImageView.setOnMouseClicked((MouseEvent event) -> {
-                if (gameUno.canPlayCard(card)) {
-                    gameUno.playCard(card);
-                    tableImageView.setImage(card.getImage());
-                    humanPlayer.removeCard(findPosCardsHumanPlayer(card));
-                    threadPlayMachine.setHasPlayerPlayed(true);
-                    printCardsHumanPlayer();
-                }
-            });
-
-            this.gridPaneCardsPlayer.add(cardImageView, i, 0);
+            attachCardClickHandler(cardImageView, card, currentTableCard);
+            addCardToGrid(cardImageView, i);
         }
+    }
+
+    // Attaches a click event handler to the card
+    private void attachCardClickHandler(ImageView cardImageView, Card card, Card currentTableCard) {
+        cardImageView.setOnMouseClicked(event -> handleCardClick(card, currentTableCard));
+    }
+
+    // Handles the logic for when a player clicks a card
+    private void handleCardClick(Card card, Card currentTableCard) {
+        if(gameUno.canPlayCard(card)) {
+            processValidCardPlay(card);
+
+        }
+        else {
+            System.out.println("Card is not valid");
+        }
+    }
+
+    // Processes the actions for playing a valid card
+    private void processValidCardPlay(Card card) {
+        gameUno.playCard(card);
+        tableImageView.setImage(card.getImage());
+        humanPlayer.removeCard(findPosCardsHumanPlayer(card));
+        if (gameUno.getCurrentPlayer().equals(machinePlayer)) {
+            threadPlayMachine.setHasPlayerPlayed(true);
+        }
+        printCardsHumanPlayer(); // Refresh the view for the updated hand
+    }
+
+    // Adds a card to the player's grid at a specific position
+    private void addCardToGrid(ImageView cardImageView, int position) {
+        this.gridPaneCardsPlayer.add(cardImageView, position, 0);
     }
 
     /**
@@ -139,15 +184,22 @@ public class GameUnoController {
      */
     @FXML
     void onHandleTakeCard(ActionEvent event) {
-        if (gameUno.getCurrentPlayer().equals(humanPlayer)) {
-            Card drawnCard = deck.takeCard();
-            if (drawnCard != null) {
-                humanPlayer.addCard(drawnCard);
+        if (threadPlayMachine.getHasPlayerPlayed()) {
+            if (!deck.isEmpty()) {
+                Card playerNewCard = deck.takeCard();
+                humanPlayer.addCard(playerNewCard);
+                System.out.println("Added Player Card!: " + playerNewCard.getColor() + "/" + playerNewCard.getValue());
+                System.out.println("-----------------------");
                 printCardsHumanPlayer();
-                if (!gameUno.canPlayCard(drawnCard)) {
-                    threadPlayMachine.setHasPlayerPlayed(true);
-                }
             }
+            else {
+                System.out.println("Deck is empty!");
+            }
+            gameUno.cardTaken();
+            threadPlayMachine.setHasPlayerPlayed(true);
+        }
+        else {
+            System.out.println("Not Player's Turn");
         }
     }
 
@@ -158,16 +210,6 @@ public class GameUnoController {
      */
     @FXML
     void onHandleUno(ActionEvent event) {
-        if (humanPlayer.getCardsPlayer().size() == 2) {
-            // El jugador ha dicho UNO correctamente
-            System.out.println("¡UNO!");
-        } else {
-            Card penaltyCard = deck.takeCard();
-            if (penaltyCard != null) {
-                humanPlayer.addCard(penaltyCard);
-                printCardsHumanPlayer();
-            }
-            System.out.println("¡UNO! declarado incorrectamente");
-        }
+        // Implement logic to handle Uno event here
     }
 }
