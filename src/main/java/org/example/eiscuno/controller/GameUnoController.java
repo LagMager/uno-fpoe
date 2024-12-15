@@ -88,6 +88,14 @@ public class GameUnoController {
         this.gridPaneCardsPlayer.getChildren().clear();
     }
 
+
+    // Fetches the currently visible cards for the human player
+    private Card[] fetchVisibleCardsForHumanPlayer() {
+        return this.gameUno.getCurrentVisibleCardsHumanPlayer(this.posInitCardToShow);
+    }
+
+=======
+
     // Fetches the currently visible cards for the human player
     private Card[] fetchVisibleCardsForHumanPlayer() {
         return this.gameUno.getCurrentVisibleCardsHumanPlayer(this.posInitCardToShow);
@@ -125,16 +133,30 @@ public class GameUnoController {
     }
 
 
+
+=======
+    // Processes the actions for playing a valid card
+
     private void processValidCardPlay(Card card) {
         gameUno.playCard(card);
         tableImageView.setImage(card.getImage());
         humanPlayer.removeCard(findPosCardsHumanPlayer(card));
+
         checkGameOver();
         if (gameUno.getCurrentPlayer().equals(machinePlayer)) {
             threadPlayMachine.setHasPlayerPlayed(true);
         }
         printCardsHumanPlayer();
     }
+
+=======
+        if (gameUno.getCurrentPlayer().equals(machinePlayer)) {
+            threadPlayMachine.setHasPlayerPlayed(true);
+        }
+        printCardsHumanPlayer(); // Refresh the view for the updated hand
+    }
+
+    // Adds a card to the player's grid at a specific position
 
     private void addCardToGrid(ImageView cardImageView, int position) {
         this.gridPaneCardsPlayer.add(cardImageView, position, 0);
@@ -198,7 +220,9 @@ public class GameUnoController {
             }
             else {
                 System.out.println("Deck is empty!");
+
                 checkGameOver();
+
             }
             gameUno.cardTaken();
             threadPlayMachine.setHasPlayerPlayed(true);
@@ -285,5 +309,6 @@ public class GameUnoController {
         threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView, this.deck,
                 this.strategy, this, this.gameUno);
         threadPlayMachine.start();
+
     }
 }
