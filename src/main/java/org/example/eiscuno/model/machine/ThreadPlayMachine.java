@@ -59,7 +59,10 @@ public class ThreadPlayMachine extends Thread {
             }
         }
 
-        putRandomCard();
+        Card newCard = deck.takeCard();
+        System.out.println("I dont have any cards");
+        machinePlayer.addCard(newCard);
+        System.out.println("Added AI Card!: " + newCard.getColor() + "/" + newCard.getValue());
     }
 
     private void playCard(Card card, int index) {
