@@ -61,8 +61,8 @@ public class Deck {
             return "9";
         } else if (name.startsWith("TWO_WILD_DRAW_")){
             return "TWO_WILD_DRAW";
-        } else if (name.startsWith("RESERVE")){
-            return "RESERVE";
+        } else if (name.startsWith("REVERSE")){
+            return "REVERSE";
         } else if (name.startsWith("SKIP")){
             return "SKIP";
         } else if (name.equals("FOUR_WILD_DRAW")){

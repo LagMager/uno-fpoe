@@ -3,11 +3,11 @@ package org.example.eiscuno.controller;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import org.example.eiscuno.model.card.Card;
 import org.example.eiscuno.model.deck.Deck;
 import org.example.eiscuno.model.game.GameUno;
+import org.example.eiscuno.model.machine.BasicAIPlayerStrategy;
 import org.example.eiscuno.model.machine.ThreadPlayMachine;
 import org.example.eiscuno.model.machine.ThreadSingUNOMachine;
 import org.example.eiscuno.model.player.Player;
@@ -29,6 +29,7 @@ public class GameUnoController {
 
     private Player humanPlayer;
     private Player machinePlayer;
+    private BasicAIPlayerStrategy strategy = new BasicAIPlayerStrategy();
     private Deck deck;
     private Table table;
     private GameUno gameUno;
@@ -46,12 +47,13 @@ public class GameUnoController {
         this.gameUno.startGame();
         tableImageView.setImage(table.getCurrentCardOnTheTable().getImage());
         printCardsHumanPlayer();
-        System.out.println("player can play");
+        System.out.println("GAME START!");
         threadSingUNOMachine = new ThreadSingUNOMachine(this.humanPlayer.getCardsPlayer());
         Thread t = new Thread(threadSingUNOMachine, "ThreadSingUNO");
         t.start();
 
-        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView, this.deck);
+        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView, this.deck,
+                this.strategy, this, this.gameUno);
         threadPlayMachine.start();
     }
 
@@ -69,7 +71,7 @@ public class GameUnoController {
 
 
     // Entry point for updating the human player's visible cards
-    private void printCardsHumanPlayer() {
+    public void printCardsHumanPlayer() {
         clearCardGrid();
         Card[] visibleCards = fetchVisibleCardsForHumanPlayer();
         Card currentTableCard = fetchCurrentTableCard();
@@ -109,8 +111,12 @@ public class GameUnoController {
 
     // Handles the logic for when a player clicks a card
     private void handleCardClick(Card card, Card currentTableCard) {
-        if (this.gameUno.validCard(card, currentTableCard) && !threadPlayMachine.getHasPlayerPlayed()) {
+        if(gameUno.canPlayCard(card)) {
             processValidCardPlay(card);
+
+        }
+        else {
+            System.out.println("Card is not valid");
         }
     }
 
@@ -119,7 +125,9 @@ public class GameUnoController {
         gameUno.playCard(card);
         tableImageView.setImage(card.getImage());
         humanPlayer.removeCard(findPosCardsHumanPlayer(card));
-        threadPlayMachine.setHasPlayerPlayed(true);
+        if (gameUno.getCurrentPlayer().equals(machinePlayer)) {
+            threadPlayMachine.setHasPlayerPlayed(true);
+        }
         printCardsHumanPlayer(); // Refresh the view for the updated hand
     }
 
@@ -176,16 +184,18 @@ public class GameUnoController {
      */
     @FXML
     void onHandleTakeCard(ActionEvent event) {
-        if (!threadPlayMachine.getHasPlayerPlayed()) {
+        if (threadPlayMachine.getHasPlayerPlayed()) {
             if (!deck.isEmpty()) {
                 Card playerNewCard = deck.takeCard();
                 humanPlayer.addCard(playerNewCard);
                 System.out.println("Added Player Card!: " + playerNewCard.getColor() + "/" + playerNewCard.getValue());
+                System.out.println("-----------------------");
                 printCardsHumanPlayer();
             }
             else {
                 System.out.println("Deck is empty!");
             }
+            gameUno.cardTaken();
             threadPlayMachine.setHasPlayerPlayed(true);
         }
         else {
