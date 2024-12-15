@@ -19,6 +19,7 @@ public class GameUno implements IGameUno {
     private Player currentPlayer;
     private Player nextPlayer;
 
+    private static final String NUMBER = "NUMBER";
     private static final String SKIP = "SKIP";
     private static final String REVERSE = "REVERSE";
     private static final String DRAW_TWO = "DRAW_TWO";
@@ -56,6 +57,8 @@ public class GameUno implements IGameUno {
                 machinePlayer.addCard(this.deck.takeCard());
             }
         }
+        table.addCardOnTheTable(this.deck.takeCard());
+
     }
 
     /**
@@ -79,50 +82,77 @@ public class GameUno implements IGameUno {
     @Override
     public void playCard(Card card) {
         if(!canPlayCard(card)) {
+            System.out.println("You can't play this card!");
             return;
         }
 
         table.addCardOnTheTable(card);
-        handleSpecialCard(card);
-        switchPlayers();
+        handleCards(card);
+        System.out.println("Played card: " + card.getColor() + "/" + card.getValue());
     }
 
+    /**
+     * Determines if a given card can be played based on the current card on the table.
+     * <p>
+     * This method checks if the card can be played according to the rules of Uno. It handles the case where the table
+     * has no current card (e.g., at the start of the game).
+     * </p>
+     *
+     * @param card The card that the player wants to play.
+     * @return true if the card can be played, false otherwise.
+     */
     public boolean canPlayCard(Card card) {
+        Card topCard;
         try {
-            Card topCard = table.getCurrentCardOnTheTable();
-            if (card.getCardType() != null &&
-                    (card.getCardType().equals(WILD) ||
-                            card.getCardType().equals(WILD_DRAW_FOUR))) {
-                return true;
-            }
-            return card.getColor().equals(topCard.getColor()) ||
-                    (card.getValue() != null && card.getValue().equals(topCard.getValue())) ||
-                    (card.getCardType() != null && card.getCardType().equals(topCard.getCardType()));
+            topCard = table.getCurrentCardOnTheTable();
         } catch (IndexOutOfBoundsException e) {
             return true;
         }
+        return Card.CardValidator.canPlayCard(card, topCard);
+    }
+    public void cardTaken(){
+        switchPlayers();
     }
 
-    private void handleSpecialCard(Card card) {
+    /**
+     * Handles the effects of the special cards when they are played.
+     * <p>
+     * This method executes the special actions associated with each type of card. These actions include skipping the
+     * next player, reversing the play order, drawing cards, and switching players.
+     * </p>
+     *
+     * @param card The card that was played.
+     */
+    private void handleCards(Card card) {
         String cardType = card.getCardType();
-        if(cardType == null) return;
+        if (cardType == null) {
+            return;
+        }
 
-        switch (cardType){
-            case SKIP:
+        switch (cardType) {
+            case NUMBER:
                 switchPlayers();
+                break;
+            case SKIP:
+                System.out.println("SKIPPED " + nextPlayer.getTypePlayer());
                 break;
             case REVERSE:
                 isReversed = !isReversed;
                 Player temp = nextPlayer;
                 nextPlayer = currentPlayer;
                 currentPlayer = temp;
+                System.out.println(currentPlayer.getTypePlayer() + "'s Turn");
                 break;
             case DRAW_TWO:
                 eatCard(nextPlayer, 2);
+                System.out.println(nextPlayer.getTypePlayer() + " draws 2 cards!!");
                 switchPlayers();
                 break;
             case WILD_DRAW_FOUR:
+                System.out.println(nextPlayer.getCardsPlayer().size());
                 eatCard(nextPlayer, 4);
+                System.out.println("Now you draw 4!");
+                System.out.println(nextPlayer.getCardsPlayer().size());
                 switchPlayers();
                 break;
             case WILD:
@@ -131,11 +161,20 @@ public class GameUno implements IGameUno {
         }
     }
 
+    /**
+     * Switches the current player and the next player.
+     * <p>
+     * This method is called when a player's turn is over. It updates the current player and the next player, ensuring
+     * that the game proceeds to the next player in the sequence.
+     * </p>
+     */
     private void switchPlayers() {
         Player temp = currentPlayer;
         currentPlayer = nextPlayer;
         nextPlayer = temp;
+        System.out.println(currentPlayer.getTypePlayer() + "'s Turn");
     }
+
 
     /**
      * Handles the scenario when a player shouts "Uno", forcing the other player to draw a card.
@@ -169,6 +208,10 @@ public class GameUno implements IGameUno {
 
         return cards;
     }
+    public Card getTableCard() {
+        return table.getCurrentCardOnTheTable();
+    }
+
 
     /**
      * Checks if the game is over.

@@ -81,7 +81,7 @@ public class Card {
                 this.cardType.equals(topCard.getCardType());
     }
 
-    public class CardValidator {
+    public static class CardValidator {
         public static boolean canPlayCard(Card cardToPlay, Card topCard) {
             if (topCard == null) {
                 return true;
@@ -92,13 +92,7 @@ public class Card {
                             cardToPlay.getCardType().equals("WILD_DRAW_FOUR"))) {
                 return true;
             }
-
-            return (cardToPlay.getColor() != null && topCard.getColor() != null &&
-                    cardToPlay.getColor().equals(topCard.getColor())) ||
-                    (cardToPlay.getValue() != null && topCard.getValue() != null &&
-                            cardToPlay.getValue().equals(topCard.getValue())) ||
-                    (cardToPlay.getCardType() != null && topCard.getCardType() != null &&
-                            cardToPlay.getCardType().equals(topCard.getCardType()));
+            return (cardToPlay.getValue().equals(topCard.getValue()) || cardToPlay.getColor().equals(topCard.getColor()));
         }
     }
 }

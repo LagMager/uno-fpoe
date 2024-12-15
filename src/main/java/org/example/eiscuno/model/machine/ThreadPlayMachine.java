@@ -1,83 +1,67 @@
 package org.example.eiscuno.model.machine;
 
+import javafx.application.Platform;
 import javafx.scene.image.ImageView;
-import org.example.eiscuno.model.card.Card;
+import org.example.eiscuno.controller.GameUnoController;
+import org.example.eiscuno.model.deck.Deck;
+import org.example.eiscuno.model.game.GameUno;
 import org.example.eiscuno.model.player.Player;
 import org.example.eiscuno.model.table.Table;
 
-public class ThreadPlayMachine extends Thread {
-    private Table table;
-    private Player machinePlayer;
-    private ImageView tableImageView;
-    private volatile boolean hasPlayerPlayed;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-    public ThreadPlayMachine(Table table, Player machinePlayer, ImageView tableImageView) {
+public class ThreadPlayMachine extends Thread {
+    private final Table table;
+    private final Player machinePlayer;
+    private final Deck deck;
+    private final ImageView tableImageView;
+    private final AtomicBoolean hasPlayerPlayed;
+    private final AIPlayerStrategy aiPlayerStrategy;
+    private final GameUnoController gameUnoController;
+    private final GameUno gameUno;
+
+    public ThreadPlayMachine(Table table, Player machinePlayer, ImageView tableImageView, Deck gameDeck, AIPlayerStrategy aiPlayerStrategy, GameUnoController gameUnoController, GameUno gameUno) {
         this.table = table;
         this.machinePlayer = machinePlayer;
         this.tableImageView = tableImageView;
-        this.hasPlayerPlayed = false;
+        this.deck = gameDeck;
+        this.hasPlayerPlayed = new AtomicBoolean(false);
+        this.aiPlayerStrategy = aiPlayerStrategy;
+        this.gameUnoController =  gameUnoController;
+        this.gameUno = gameUno;
+        this.aiPlayerStrategy.setGameUno(gameUno);
     }
 
+
+    @Override
     public void run() {
-        while (true) {
-            if(hasPlayerPlayed) {
+        while (!Thread.currentThread().isInterrupted()) {
+            if (hasPlayerPlayed.get()) {
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
+                    break;
                 }
-                playBestCard();
-                hasPlayerPlayed = false;
+                aiPlayerStrategy.playTurn(machinePlayer, table, deck, tableImageView);
+                hasPlayerPlayed.set(aiPlayerStrategy.getGameUno().getCurrentPlayer().equals(machinePlayer));
+
+                Platform.runLater(() -> {
+                    if (machinePlayer.getCardsPlayer().isEmpty() || deck.isEmpty()){
+                        gameUnoController.checkGameOver();
+                    }
+                });
+
+                Platform.runLater(gameUnoController::printCardsHumanPlayer);
             }
         }
-    }
-
-    private void playBestCard() {
-        Card topCard = null;
-        try {
-            topCard = table.getCurrentCardOnTheTable();
-        } catch (IndexOutOfBoundsException e) {
-            putRandomCard();
-            return;
-        }
-        for (int i = 0; i < machinePlayer.getCardsPlayer().size(); i++) {
-            Card card = machinePlayer.getCard(i);
-            if (card.getCardType() != null &&
-                    (card.getCardType().equals("WILD_DRAW_FOUR") ||
-                            card.getCardType().equals("DRAW_TWO"))) {
-                playCard(card, i);
-                return;
-            }
-            if (card.getColor().equals(topCard.getColor()) ||
-                    (card.getValue() != null && card.getValue().equals(topCard.getValue()))) {
-                playCard(card, i);
-                return;
-            }
-        }
-
-        putRandomCard();
-    }
-
-    private void playCard(Card card, int index) {
-        table.addCardOnTheTable(card);
-        tableImageView.setImage(card.getImage());
-        machinePlayer.removeCard(index);
-    }
-
-    private void putRandomCard() {
-        int index = (int) (Math.random() * machinePlayer.getCardsPlayer().size());
-        Card card = machinePlayer.getCard(index);
-        playCard(card, index);
     }
 
     public void setHasPlayerPlayed(boolean hasPlayerPlayed) {
-        this.hasPlayerPlayed = hasPlayerPlayed;
+        this.hasPlayerPlayed.set(hasPlayerPlayed);
     }
 
-    private void putCardOnTheTable(){
-        int index = (int) (Math.random() * machinePlayer.getCardsPlayer().size());
-        Card card = machinePlayer.getCard(index);
-        table.addCardOnTheTable(card);
-        tableImageView.setImage(card.getImage());
+    public boolean getHasPlayerPlayed() {
+        return !hasPlayerPlayed.get();
     }
 }
