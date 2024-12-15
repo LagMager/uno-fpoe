@@ -30,55 +30,65 @@ public class ThreadPlayMachine extends Thread {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                // Aqui iria la logica de colocar la carta
-                putCardOnTheTable();
+                playBestCard();
                 hasPlayerPlayed = false;
             }
         }
     }
 
-    private void putCardOnTheTable() {
-        int index = (int) (Math.random() * machinePlayer.getCardsPlayer().size());
-        Card card = machinePlayer.getCard(index);
-
-        boolean isValid = false;
+    private void playBestCard() {
+        Card topCard = null;
+        try {
+            topCard = table.getCurrentCardOnTheTable();
+        } catch (IndexOutOfBoundsException e) {
+            putRandomCard();
+            return;
+        }
         for (int i = 0; i < machinePlayer.getCardsPlayer().size(); i++) {
-            card = machinePlayer.getCard(i);
-            isValid = validCard(card);
-            if(isValid){
-                System.out.println("Machine Card: " + card.getColor() + "/" + card.getValue());
-                table.addCardOnTheTable(card);
-                tableImageView.setImage(card.getImage());
-                machinePlayer.getCardsPlayer().remove(card);
-                break;
+            Card card = machinePlayer.getCard(i);
+            if (card.getCardType() != null &&
+                    (card.getCardType().equals("WILD_DRAW_FOUR") ||
+                            card.getCardType().equals("DRAW_TWO"))) {
+                playCard(card, i);
+                return;
+            }
+            if (card.getColor().equals(topCard.getColor()) ||
+                    (card.getValue() != null && card.getValue().equals(topCard.getValue()))) {
+                playCard(card, i);
+                return;
             }
         }
-        if (!isValid){
-            Card newCard = deck.takeCard();
-            System.out.println("I dont have any cards");
-            machinePlayer.addCard(newCard);
-            System.out.println("Added AI Card!: " + newCard.getColor() + "/" + newCard.getValue());
-        }
-        System.out.println("DEBUGGING MACHINE TURN");
-        System.out.println("Table Card: " + table.getCurrentCardOnTheTable().getColor() + "/" + table.getCurrentCardOnTheTable().getValue());
+
+        putRandomCard();
+    }
+
+    private void playCard(Card card, int index) {
+        table.addCardOnTheTable(card);
+        tableImageView.setImage(card.getImage());
+        machinePlayer.removeCard(index);
+    }
+
+    private void putRandomCard() {
+        int index = (int) (Math.random() * machinePlayer.getCardsPlayer().size());
+        Card card = machinePlayer.getCard(index);
+        playCard(card, index);
+    }
+
+    public void setHasPlayerPlayed(boolean hasPlayerPlayed) {
+        this.hasPlayerPlayed = hasPlayerPlayed;
+    }
+
+    private void putCardOnTheTable(){
+        int index = (int) (Math.random() * machinePlayer.getCardsPlayer().size());
+        Card card = machinePlayer.getCard(index);
+        table.addCardOnTheTable(card);
+        tableImageView.setImage(card.getImage());
     }
 
 
     public boolean getHasPlayerPlayed() { return hasPlayerPlayed; }
 
 
-    public void setHasPlayerPlayed(boolean hasPlayerPlayed) {
-        this.hasPlayerPlayed = hasPlayerPlayed;
-    }
-
-    private boolean validCard(Card machineCard) {
-        Card TableCard = table.getCurrentCardOnTheTable();
-        if (TableCard != null) {
-            // Change this later to also take into account special cards.
-            return machineCard.getValue().equals(TableCard.getValue()) || machineCard.getColor().equals(TableCard.getColor());
-        }
-        return false;
-    }
 
 }
 

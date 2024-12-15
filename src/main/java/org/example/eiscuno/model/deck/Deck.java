@@ -25,16 +25,13 @@ public class Deck {
      */
     private void initializeDeck() {
         for (EISCUnoEnum cardEnum : EISCUnoEnum.values()) {
-            if (cardEnum.name().startsWith("GREEN_") ||
-                    cardEnum.name().startsWith("YELLOW_") ||
-                    cardEnum.name().startsWith("BLUE_") ||
-                    cardEnum.name().startsWith("RED_") ||
-                    cardEnum.name().startsWith("SKIP_") ||
-                    cardEnum.name().startsWith("RESERVE_") ||
-                    cardEnum.name().startsWith("TWO_WILD_DRAW_") ||
-                    cardEnum.name().equals("FOUR_WILD_DRAW") ||
-                    cardEnum.name().equals("WILD")) {
-                Card card = new Card(cardEnum.getFilePath(), getCardValue(cardEnum.name()), getCardColor(cardEnum.name()));
+            if (cardEnum.isPlayableCard()) {
+                Card card = new Card(
+                        cardEnum.getFilePath(),
+                        getCardValue(cardEnum.name()),
+                        getCardColor(cardEnum.name()),
+                        cardEnum.getCardType()
+                );
                 deckOfCards.push(card);
             }
         }

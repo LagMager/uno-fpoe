@@ -200,6 +200,16 @@ public class GameUnoController {
      */
     @FXML
     void onHandleUno(ActionEvent event) {
-        // Implement logic to handle Uno event here
+        if (humanPlayer.getCardsPlayer().size() == 2) {
+            // El jugador ha dicho UNO correctamente
+            System.out.println("¡UNO!");
+        } else {
+            Card penaltyCard = deck.takeCard();
+            if (penaltyCard != null) {
+                humanPlayer.addCard(penaltyCard);
+                printCardsHumanPlayer();
+            }
+            System.out.println("¡UNO! declarado incorrectamente");
+        }
     }
 }
