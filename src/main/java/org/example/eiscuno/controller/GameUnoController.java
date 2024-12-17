@@ -7,8 +7,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
-import javafx.stage.Stage;
 import org.example.eiscuno.model.card.Card;
 import org.example.eiscuno.model.deck.Deck;
 import org.example.eiscuno.model.game.GameUno;
@@ -18,11 +18,14 @@ import org.example.eiscuno.model.machine.ThreadSingUNOMachine;
 import org.example.eiscuno.model.player.Player;
 import org.example.eiscuno.model.table.Table;
 
+import java.util.Random;
+
 /**
  * Controller class for the Uno game.
  */
 public class GameUnoController implements GameUno.GameEventListener {
 
+    public BorderPane mainPane;
     @FXML
     private GridPane gridPaneCardsMachine;
 
@@ -44,6 +47,7 @@ public class GameUnoController implements GameUno.GameEventListener {
 
     private ThreadSingUNOMachine threadSingUNOMachine;
     private ThreadPlayMachine threadPlayMachine;
+    private Thread singUnoMachineThread;
 
     /**
      * Initializes the controller.
@@ -71,8 +75,8 @@ public class GameUnoController implements GameUno.GameEventListener {
      */
     private void createUnoMachineThread() {
         threadSingUNOMachine = new ThreadSingUNOMachine(this.humanPlayer.getCardsPlayer(), this.gameUno);
-        Thread t = new Thread(threadSingUNOMachine, "ThreadSingUNO");
-        t.start();
+        singUnoMachineThread = new Thread(threadSingUNOMachine, "ThreadSingUNO");
+        singUnoMachineThread.start();
 
         threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView, this.deck,
                 this.strategy, this, this.gameUno);
@@ -408,8 +412,29 @@ public class GameUnoController implements GameUno.GameEventListener {
      * This method makes the button menu visible when a wild card is played during the game.
      */
     @Override
-    public void onWildCardPlayed() {
-        bottonMenu.setVisible(true);
+    public void onWildCardPlayed(boolean isPlayer) {
+        if (isPlayer) {
+            bottonMenu.setVisible(true);
+        }
+        else {
+            String selectedColor = getRandomColor();
+            gameUno.setGameColor(selectedColor);
+
+            switch (selectedColor) {
+                case "RED":
+                    mainPane.setStyle("-fx-background-color: red;");
+                    break;
+                case "GREEN":
+                    mainPane.setStyle("-fx-background-color: green;");
+                    break;
+                case "YELLOW":
+                    mainPane.setStyle("-fx-background-color: yellow;");
+                    break;
+                case "BLUE":
+                    mainPane.setStyle("-fx-background-color: blue;");
+                    break;
+            }
+        }
     }
 
 
@@ -422,6 +447,7 @@ public class GameUnoController implements GameUno.GameEventListener {
      * @param actionEvent the event triggered by the player's action (e.g., clicking a button)
      */
     public void setColorRed(ActionEvent actionEvent) {
+        mainPane.setStyle("-fx-background-color: red;");
         gameUno.setGameColor("RED");
         bottonMenu.setVisible(false);
     }
@@ -435,6 +461,7 @@ public class GameUnoController implements GameUno.GameEventListener {
      * @param actionEvent the event triggered by the player's action (e.g., clicking a button)
      */
     public void setColorBlue(ActionEvent actionEvent) {
+        mainPane.setStyle("-fx-background-color: blue;");
         gameUno.setGameColor("BLUE");
         bottonMenu.setVisible(false);
     }
@@ -448,6 +475,7 @@ public class GameUnoController implements GameUno.GameEventListener {
      * @param actionEvent the event triggered by the player's action (e.g., clicking a button)
      */
     public void setColorGreen(ActionEvent actionEvent) {
+        mainPane.setStyle("-fx-background-color: green;");
         gameUno.setGameColor("GREEN");
         bottonMenu.setVisible(false);
     }
@@ -461,8 +489,56 @@ public class GameUnoController implements GameUno.GameEventListener {
      * @param actionEvent the event triggered by the player's action (e.g., clicking a button)
      */
     public void setColorYellow(ActionEvent actionEvent) {
+        mainPane.setStyle("-fx-background-color: yellow;");
         gameUno.setGameColor("YELLOW");
         bottonMenu.setVisible(false);
     }
+
+    /**
+     * Returns a randomly selected color from a predefined set of colors.
+     * The colors are: "RED", "GREEN", "YELLOW", and "BLUE". The color is chosen
+     * randomly each time the function is called.
+     *
+     * @return a randomly selected color as a String, which can be one of the following:
+     *         "RED", "GREEN", "YELLOW", or "BLUE".
+     */
+    public static String getRandomColor() {
+        // Create an array of the colors as strings
+        String[] colors = {"RED", "GREEN", "YELLOW", "BLUE"};
+
+        // Create a Random object
+        Random random = new Random();
+
+        // Generate a random index between 0 and 3 (inclusive)
+        int randomIndex = random.nextInt(colors.length);
+
+        // Return the randomly selected color as a string
+        return colors[randomIndex];
+    }
+
+    /**
+     * Exits the game and stops all running game threads.
+     * This method interrupts the game threads (e.g., `threadPlayMachine` and `singUnoMachineThread`)
+     * and then closes the JavaFX application using `Platform.exit()`.
+     * <p>
+     * This function is typically triggered by an action event (e.g., a button click) to stop the game
+     * and close the application.
+     *
+     * @param actionEvent the event that triggered this method (e.g., a button click).
+     */
+    public void exitGame(ActionEvent actionEvent) {
+        // Interrupt the game threads to stop them
+        if (threadPlayMachine != null) {
+            threadPlayMachine.interrupt(); // Interrupts the thread
+        }
+
+        if (singUnoMachineThread != null) {
+            singUnoMachineThread.interrupt();
+        }
+
+        Platform.exit(); // This will close the JavaFX application
+    }
+
+
 
 }

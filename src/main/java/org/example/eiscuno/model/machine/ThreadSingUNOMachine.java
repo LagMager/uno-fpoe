@@ -36,11 +36,12 @@ public class ThreadSingUNOMachine implements Runnable{
      */
     @Override
     public void run(){
-        while (true){
+        while (!Thread.currentThread().isInterrupted()) {  // Check for interruptions
             try {
-                Thread.sleep((long) (Math.random() * 5000));
+                Thread.sleep((long) (Math.random() * 5000));  // Simulate random delay
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();  // Restore interrupt status
+                break;  // Exit the loop if interrupted
             }
             hasOneCardTheHumanPlayer();
         }

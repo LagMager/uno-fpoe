@@ -5,6 +5,8 @@ import org.example.eiscuno.model.deck.Deck;
 import org.example.eiscuno.model.player.Player;
 import org.example.eiscuno.model.table.Table;
 
+import java.util.Random;
+
 /**
  * Represents a game of Uno.
  * This class manages the game logic and interactions between players, deck, and the table.
@@ -42,7 +44,7 @@ public class GameUno implements IGameUno {
          * This method is triggered whenever a wild card is played, and implementing
          * classes should define the appropriate action to take when this event occurs.
          */
-        void onWildCardPlayed();
+        void onWildCardPlayed(boolean isPlayer);
     }
 
     /**
@@ -179,14 +181,18 @@ public class GameUno implements IGameUno {
                 System.out.println(nextPlayer.getCardsPlayer().size());
                 eatCard(nextPlayer, 4);
                 System.out.println("Now you draw 4!");
-                if (gameEventListener != null) {
-                    gameEventListener.onWildCardPlayed();
+                if ((gameEventListener != null) && currentPlayer == humanPlayer) {
+                    gameEventListener.onWildCardPlayed(true);
+                } else if (gameEventListener != null && (currentPlayer == machinePlayer)) {
+                    gameEventListener.onWildCardPlayed(false);
                 }
                 System.out.println(nextPlayer.getCardsPlayer().size());
                 break;
             case WILD:
-                if (gameEventListener != null) {
-                    gameEventListener.onWildCardPlayed();
+                if ((gameEventListener != null) && currentPlayer == humanPlayer) {
+                    gameEventListener.onWildCardPlayed(true);
+                } else if (gameEventListener != null && (currentPlayer == machinePlayer)) {
+                    gameEventListener.onWildCardPlayed(false);
                 }
                 break;
         }
@@ -301,4 +307,25 @@ public class GameUno implements IGameUno {
     public void setGameEventListener(GameEventListener gameEventListener) {
         this.gameEventListener = gameEventListener;
     }
+
+    /**
+     * Returns a randomly selected color as a String.
+     *
+     * @return a color as a String: "RED", "GREEN", "YELLOW", or "BLUE"
+     */
+    public static String getRandomColor() {
+        // Create an array of the colors as strings
+        String[] colors = {"RED", "GREEN", "YELLOW", "BLUE"};
+
+        // Create a Random object
+        Random random = new Random();
+
+        // Generate a random index between 0 and 3 (inclusive)
+        int randomIndex = random.nextInt(colors.length);
+
+        // Return the randomly selected color as a string
+        return colors[randomIndex];
+    }
 }
+
+
