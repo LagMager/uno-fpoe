@@ -2,6 +2,7 @@ package org.example.eiscuno.model.game;
 
 import org.example.eiscuno.model.card.Card;
 import org.example.eiscuno.model.deck.Deck;
+import org.example.eiscuno.model.exception.InvalidCardPlayException;
 import org.example.eiscuno.model.player.Player;
 import org.example.eiscuno.model.table.Table;
 
@@ -104,7 +105,9 @@ public class GameUno implements IGameUno {
     @Override
     public void playCard(Card card) {
         if(!canPlayCard(card)) {
-            return;
+            throw new InvalidCardPlayException("No se puede usar la carta " + card.getColor() + "/" + card.getValue() +
+                    " sobre " + table.getCurrentCardOnTheTable().getColor() + "/" +
+                    table.getCurrentCardOnTheTable().getValue());
         }
 
         setGameColor(card.getColor());
