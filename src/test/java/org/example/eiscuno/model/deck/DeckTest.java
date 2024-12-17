@@ -2,6 +2,7 @@ package org.example.eiscuno.model.deck;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import javafx.application.Platform;
 import org.example.eiscuno.model.card.Card;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +22,8 @@ class DeckTest {
     @Test
     @DisplayName("Should initialize deck with correct number of cards")
     void shouldInitializeDeckWithCorrectCards() {
+        Platform.startup(()->{});
+
         Deck deck = new Deck();
         assertFalse(deck.isEmpty(), "Deck should not be empty after initialization");
     }

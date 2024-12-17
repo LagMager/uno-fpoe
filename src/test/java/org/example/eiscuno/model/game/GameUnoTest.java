@@ -2,14 +2,12 @@ package org.example.eiscuno.model.game;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import javafx.application.Platform;
 import org.example.eiscuno.model.card.Card;
 import org.example.eiscuno.model.deck.Deck;
 import org.example.eiscuno.model.player.Player;
 import org.example.eiscuno.model.table.Table;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.*;
 
 /**
  * Unit tests for the {@link GameUno} class.
@@ -20,12 +18,18 @@ import org.junit.jupiter.api.Nested;
 @DisplayName("GameUno Tests")
 class GameUnoTest {
 
+
     private GameUno gameUno;
     private Player humanPlayer;
     private Player machinePlayer;
     private Deck deck;
     private Table table;
 
+    @BeforeAll
+    static void start() {
+        Platform.startup(()->{});
+
+    }
     /**
      * Setup method to initialize the game, players, deck, and table before each test.
      * This ensures that each test starts with a fresh game state.
@@ -47,6 +51,7 @@ class GameUnoTest {
     @Nested
     @DisplayName("Game Initialization Tests")
     class GameInitializationTests {
+
 
         /**
          * Test to ensure that the game initializes with the correct number of cards for each player.

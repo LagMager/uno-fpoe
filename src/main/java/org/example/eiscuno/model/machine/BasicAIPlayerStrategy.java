@@ -16,7 +16,7 @@ import org.example.eiscuno.model.table.Table;
  * It interacts with the {@link GameUno} instance to check for valid plays and update
  * the game state accordingly.
  */
-public class BasicAIPlayerStrategy implements AIPlayerStrategy {
+public class BasicAIPlayerStrategy extends AIPlayerStrategyAdapter {
     private GameUno gameUno; // Reference to GameUno
 
 
