@@ -60,6 +60,15 @@ public class Player implements IPlayer {
         return cardsPlayer.get(index);
     }
 
+    /**
+     * Retrieves the type of the player.
+     * <p>
+     * This method returns the value of the {@code typePlayer} field, which represents
+     * the type or role of the player in the game. The value is typically predefined
+     * and can indicate whether the player is human, AI, or another type.
+     *
+     * @return A {@code String} representing the player's type.
+     */
     public String getTypePlayer() {
         return typePlayer;
     }

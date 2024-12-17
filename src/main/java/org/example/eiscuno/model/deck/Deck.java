@@ -38,6 +38,27 @@ public class Deck {
         Collections.shuffle(deckOfCards);
     }
 
+    /**
+     * Retrieves the card value based on its name.
+     * <p>
+     * This method analyzes the provided card name string and extracts its value.
+     * It checks for numeric card values (0-9) and special card types such as "REVERSE",
+     * "SKIP", "WILD", "TWO_WILD_DRAW", and "FOUR_WILD_DRAW".
+     *
+     * @param name The name of the card as a string. It is expected to follow specific naming conventions
+     *             where numeric cards end with a digit, and special cards contain keywords like "REVERSE",
+     *             "SKIP", or "WILD".
+     * @return A string representing the card's value. Possible values include:
+     *         <ul>
+     *             <li>"0" through "9" for numeric cards</li>
+     *             <li>"REVERSE" for reverse cards</li>
+     *             <li>"SKIP" for skip cards</li>
+     *             <li>"TWO_WILD_DRAW" for +2 wild draw cards</li>
+     *             <li>"FOUR_WILD_DRAW" for +4 wild draw cards</li>
+     *             <li>"WILD" for wild cards</li>
+     *         </ul>
+     *         Returns {@code null} if the card name does not match any known value.
+     */
     private String getCardValue(String name) {
         if (name.endsWith("0")){
             return "0";
@@ -74,6 +95,28 @@ public class Deck {
 
     }
 
+    /**
+     * Retrieves the card color based on its name.
+     * <p>
+     * This method analyzes the provided card name string and extracts its color.
+     * It checks for standard card colors ("GREEN", "YELLOW", "BLUE", "RED") that appear
+     * at the beginning or end of the card name. It also handles special cards like "WILD"
+     * and "FOUR_WILD_DRAW", which do not have a specific color.
+     *
+     * @param name The name of the card as a string. It is expected to follow specific naming conventions
+     *             where colors like "GREEN", "YELLOW", "BLUE", or "RED" appear at the start or end
+     *             of the card name.
+     * @return A string representing the card's color. Possible values include:
+     *         <ul>
+     *             <li>"GREEN" for green cards</li>
+     *             <li>"YELLOW" for yellow cards</li>
+     *             <li>"BLUE" for blue cards</li>
+     *             <li>"RED" for red cards</li>
+     *             <li>"FOUR_WILD_DRAW" for +4 wild draw cards</li>
+     *             <li>"WILD" for wild cards</li>
+     *         </ul>
+     *         Returns {@code null} if the card name does not match any known color.
+     */
     private String getCardColor(String name){
         if(name.startsWith("GREEN")){
             return "GREEN";

@@ -5,6 +5,9 @@ import javafx.scene.image.ImageView;
 
 /**
  * Represents a card in the Uno game.
+ * <p>
+ * Each card has a value, color, and card type. It also has an image and an ImageView for display purposes.
+ * The card's properties are used to determine its validity in gameplay.
  */
 public class Card {
     private String url;
@@ -15,10 +18,15 @@ public class Card {
     private String cardType;
 
     /**
-     * Constructs a Card with the specified image URL and name.
+     * Constructs a Card with the specified image URL, value, color, and card type.
+     * <p>
+     * This constructor initializes the card with the provided image URL, value, color, and card type.
+     * It also creates an Image and an ImageView for the card.
      *
      * @param url the URL of the card image
-     * @param value of the card
+     * @param value the value of the card (e.g., "1", "WILD")
+     * @param color the color of the card (e.g., "RED", "GREEN")
+     * @param cardType the type of the card (e.g., "WILD", "DRAW_TWO")
      */
     public Card(String url, String value, String color, String cardType) {
         this.url = url;
@@ -29,9 +37,10 @@ public class Card {
         this.cardImageView = createCardImageView();
     }
 
-
     /**
      * Creates and configures the ImageView for the card.
+     * <p>
+     * This method creates an ImageView to display the card's image, setting its size and position.
      *
      * @return the configured ImageView of the card
      */
@@ -61,28 +70,57 @@ public class Card {
         return image;
     }
 
+    /**
+     * Gets the value of the card.
+     * <p>
+     * This method returns the value of the card (e.g., "1", "WILD").
+     *
+     * @return the value of the card
+     */
     public String getValue() {
         return value;
     }
 
+    /**
+     * Gets the color of the card.
+     * <p>
+     * This method returns the color of the card (e.g., "RED", "GREEN").
+     *
+     * @return the color of the card
+     */
     public String getColor() {
         return color;
     }
 
+    /**
+     * Gets the type of the card.
+     * <p>
+     * This method returns the type of the card (e.g., "WILD", "DRAW_TWO").
+     *
+     * @return the type of the card
+     */
     public String getCardType() {return cardType; }
 
-    public boolean canPlayOn(Card topCard) {
-        if (this.cardType.equals("WILD") || this.cardType.equals("WILD_DRAW_FOUR")) {
-            return true;
-        }
-
-        return this.color.equals(topCard.getColor()) ||
-                (this.value != null && this.value.equals(topCard.getValue())) ||
-                this.cardType.equals(topCard.getCardType());
-    }
-
+    /**
+     * Utility class for validating card playability.
+     * <p>
+     * This class provides methods to check whether a card can be played based on game rules.
+     */
     public static class CardValidator {
-        public static boolean canPlayCard(Card cardToPlay, Card topCard) {
+
+        /**
+         * Checks if a card can be played on top of another card.
+         * <p>
+         * This method validates whether the given card can be played on top of the
+         * current top card, based on the game's rules. It considers the card's value, color,
+         * and special types like "WILD" or "WILD_DRAW_FOUR".
+         *
+         * @param cardToPlay The card the player wants to play.
+         * @param topCard    The current top card on the table.
+         * @param gameColor  The current game color (used for matching with wild cards).
+         * @return {@code true} if the card can be played, {@code false} otherwise.
+         */
+        public static boolean canPlayCard(Card cardToPlay, Card topCard, String gameColor) {
             if (topCard == null) {
                 return true;
             }
@@ -92,7 +130,7 @@ public class Card {
                             cardToPlay.getCardType().equals("WILD_DRAW_FOUR"))) {
                 return true;
             }
-            return (cardToPlay.getValue().equals(topCard.getValue()) || cardToPlay.getColor().equals(topCard.getColor()));
+            return (cardToPlay.getValue().equals(topCard.getValue()) || (cardToPlay.getColor().equals(topCard.getColor()) || cardToPlay.getColor().equals(gameColor)));
         }
     }
 }
