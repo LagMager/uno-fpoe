@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import org.example.eiscuno.model.card.Card;
@@ -20,7 +21,7 @@ import org.example.eiscuno.model.table.Table;
 /**
  * Controller class for the Uno game.
  */
-public class GameUnoController {
+public class GameUnoController implements GameUno.GameEventListener {
 
     @FXML
     private GridPane gridPaneCardsMachine;
@@ -28,6 +29,8 @@ public class GameUnoController {
     @FXML
     private GridPane gridPaneCardsPlayer;
 
+    @FXML
+    private AnchorPane bottonMenu;
     @FXML
     private ImageView tableImageView;
 
@@ -47,12 +50,27 @@ public class GameUnoController {
      */
     @FXML
     public void initialize() {
+        bottonMenu.setVisible(false);
         initVariables();
         this.gameUno.startGame();
         tableImageView.setImage(table.getCurrentCardOnTheTable().getImage());
         printCardsHumanPlayer();
         System.out.println("GAME START!");
-        threadSingUNOMachine = new ThreadSingUNOMachine(this.humanPlayer.getCardsPlayer());
+        createUnoMachineThread();
+    }
+
+    /**
+     * Creates and starts the threads for handling the human player's UNO card checking and the machine player's turn.
+     * <p>
+     * This method initializes two threads:
+     * <ul>
+     *     <li>A thread that monitors the human player's cards to check if they have only one card left ("UNO").</li>
+     *     <li>A thread that controls the machine player's actions during the game, including playing cards.</li>
+     * </ul>
+     * The threads are started immediately after creation to handle their respective tasks concurrently.
+     */
+    private void createUnoMachineThread() {
+        threadSingUNOMachine = new ThreadSingUNOMachine(this.humanPlayer.getCardsPlayer(), this.gameUno);
         Thread t = new Thread(threadSingUNOMachine, "ThreadSingUNO");
         t.start();
 
@@ -71,10 +89,17 @@ public class GameUnoController {
         this.table = new Table();
         this.gameUno = new GameUno(this.humanPlayer, this.machinePlayer, this.deck, this.table);
         this.posInitCardToShow = 0;
+        this.gameUno.setGameEventListener(this);
     }
 
 
-    // Entry point for updating the human player's visible cards
+    /**
+     * Updates and displays the cards of the human player on the screen.
+     * <p>
+     * This method clears the current card grid, fetches the visible cards for the human player,
+     * retrieves the current card on the table, and then renders the player's cards on the grid.
+     * It ensures that the human player's cards are displayed correctly and that the current game state is reflected.
+     */
     public void printCardsHumanPlayer() {
         clearCardGrid();
         Card[] visibleCards = fetchVisibleCardsForHumanPlayer();
@@ -83,30 +108,49 @@ public class GameUnoController {
         renderPlayerCards(visibleCards, currentTableCard);
     }
 
-    // Clears the grid displaying the player's cards
+    /**
+     * Clears all the cards from the player's card grid.
+     * <p>
+     * This method removes all the card image views from the grid, effectively clearing the player's displayed hand.
+     * It is typically used when the player's cards need to be updated or reset.
+     */
     private void clearCardGrid() {
         this.gridPaneCardsPlayer.getChildren().clear();
     }
 
-
-    // Fetches the currently visible cards for the human player
+    /**
+     * Fetches the visible cards for the human player based on the current game state.
+     * <p>
+     * This method retrieves the cards that are visible to the human player, starting from a specified position.
+     * The cards are fetched using the current game state and the position from which to start showing the cards.
+     *
+     * @return an array of cards that are visible to the human player
+     */
     private Card[] fetchVisibleCardsForHumanPlayer() {
         return this.gameUno.getCurrentVisibleCardsHumanPlayer(this.posInitCardToShow);
     }
 
-=======
-
-    // Fetches the currently visible cards for the human player
-    private Card[] fetchVisibleCardsForHumanPlayer() {
-        return this.gameUno.getCurrentVisibleCardsHumanPlayer(this.posInitCardToShow);
-    }
-
-    // Fetches the current card on the table
+    /**
+     * Fetches the current card on the table.
+     * <p>
+     * This method retrieves the card that is currently placed on the table, which is used to determine valid plays
+     * for the player.
+     *
+     * @return the current card on the table, or null if no card is present
+     */
     private Card fetchCurrentTableCard() {
         return this.table.getCurrentCardOnTheTable();
     }
 
-    // Renders the player's visible cards and attaches click event handlers
+    /**
+     * Renders the player's cards on the grid and attaches click handlers to each card.
+     * <p>
+     * This method iterates over the provided array of cards, creating an image view for each card, attaching a click handler,
+     * and adding the card's image view to the player's card grid at the appropriate position.
+     *
+     * @param cards an array of cards to be rendered for the player
+     * @param currentTableCard the card currently on the table, used to check if the player can play the cards
+     */
     private void renderPlayerCards(Card[] cards, Card currentTableCard) {
         for (int i = 0; i < cards.length; i++) {
             Card card = cards[i];
@@ -116,12 +160,29 @@ public class GameUnoController {
         }
     }
 
-    // Attaches a click event handler to the card
+    /**
+     * Attaches a click handler to the specified card image view.
+     * <p>
+     * This method sets up an event listener for mouse clicks on the given card's image view. When the card is clicked,
+     * it triggers the {@link #handleCardClick(Card, Card)} method to check if the card can be played based on the current game state.
+     *
+     * @param cardImageView the image view representing the card to which the click handler will be attached
+     * @param card the card associated with the image view
+     * @param currentTableCard the card currently on the table, used to check if the clicked card can be played
+     */
     private void attachCardClickHandler(ImageView cardImageView, Card card, Card currentTableCard) {
         cardImageView.setOnMouseClicked(event -> handleCardClick(card, currentTableCard));
     }
 
-    // Handles the logic for when a player clicks a card
+    /**
+     * Handles the click event of a card by the human player.
+     * <p>
+     * This method checks if the clicked card is valid to play based on the current game state. If the card is valid,
+     * it processes the card play; otherwise, it prints a message indicating that the card is not valid.
+     *
+     * @param card the card that was clicked by the human player
+     * @param currentTableCard the card currently on the table, used to check if the clicked card can be played
+     */
     private void handleCardClick(Card card, Card currentTableCard) {
         if(gameUno.canPlayCard(card)) {
             processValidCardPlay(card);
@@ -133,10 +194,21 @@ public class GameUnoController {
     }
 
 
-
-=======
-    // Processes the actions for playing a valid card
-
+    /**
+     * Processes a valid card play made by the human player.
+     * <p>
+     * This method performs the necessary actions when the human player plays a valid card:
+     * <ul>
+     *     <li>The card is played in the game using the {@link GameUno#playCard(Card)} method.</li>
+     *     <li>The card's image is updated on the table.</li>
+     *     <li>The card is removed from the human player's hand.</li>
+     *     <li>The game over condition is checked.</li>
+     *     <li>If the current player is the machine player, it signals that the AI player has played.</li>
+     *     <li>The human player's cards are printed again to reflect the updated hand.</li>
+     * </ul>
+     *
+     * @param card the valid card to be played
+     */
     private void processValidCardPlay(Card card) {
         gameUno.playCard(card);
         tableImageView.setImage(card.getImage());
@@ -149,15 +221,14 @@ public class GameUnoController {
         printCardsHumanPlayer();
     }
 
-=======
-        if (gameUno.getCurrentPlayer().equals(machinePlayer)) {
-            threadPlayMachine.setHasPlayerPlayed(true);
-        }
-        printCardsHumanPlayer(); // Refresh the view for the updated hand
-    }
-
-    // Adds a card to the player's grid at a specific position
-
+    /**
+     * Adds a card image view to the player's card grid at the specified position.
+     * <p>
+     * This method places the given card image view into the grid at the specified position (column) in the first row.
+     *
+     * @param cardImageView the image view representing the card to be added to the grid
+     * @param position the column position in the grid where the card image view should be placed
+     */
     private void addCardToGrid(ImageView cardImageView, int position) {
         this.gridPaneCardsPlayer.add(cardImageView, position, 0);
     }
@@ -239,9 +310,21 @@ public class GameUnoController {
      */
     @FXML
     void onHandleUno(ActionEvent event) {
-        // Implement logic to handle Uno event here
+    gameUno.haveSungOne("HUMAN_PLAYER");
     }
 
+    /**
+     * Checks if the game is over and determines the winner.
+     * <p>
+     * This method evaluates the current state of the game to check if either the human player or the
+     * machine player has won, or if the game is a tie. It considers the following conditions:
+     * <ul>
+     *     <li>If the human player has no cards left, the human player wins.</li>
+     *     <li>If the machine player has no cards left, the machine player wins.</li>
+     *     <li>If the deck is empty, the player with fewer cards wins. If both players have the same number of cards, the game is a tie.</li>
+     * </ul>
+     * If a winner is determined, it triggers the display of the game over dialog with the appropriate message.
+     */
     public void checkGameOver(){
         String winner = null;
         if(humanPlayer.getCardsPlayer().isEmpty()){
@@ -266,6 +349,15 @@ public class GameUnoController {
         }
     }
 
+    /**
+     * Displays a game over dialog with options to restart the game or exit.
+     * <p>
+     * This method is called when the game ends. It shows a confirmation dialog with a message and two
+     * buttons: one to restart the game and another to exit the game. The behavior is determined by the
+     * player's selection.
+     *
+     * @param message the message to be displayed in the game over dialog
+     */
     private void showGameOverDialog(String message) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -288,7 +380,12 @@ public class GameUnoController {
         });
     }
 
-
+    /**
+     * Restarts the game by resetting necessary variables and starting a new game.
+     * <p>
+     * This method is called when the player chooses to restart the game from the game over dialog.
+     * It stops any ongoing threads, reinitializes variables, and starts a new game session.
+     */
     private void restartGame() {
         if (threadPlayMachine != null) {
             threadPlayMachine.interrupt();
@@ -302,13 +399,70 @@ public class GameUnoController {
         tableImageView.setImage(table.getCurrentCardOnTheTable().getImage());
         printCardsHumanPlayer();
 
-        threadSingUNOMachine = new ThreadSingUNOMachine(this.humanPlayer.getCardsPlayer());
-        Thread t = new Thread(threadSingUNOMachine, "ThreadSingUNO");
-        t.start();
-
-        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView, this.deck,
-                this.strategy, this, this.gameUno);
-        threadPlayMachine.start();
-
+        createUnoMachineThread();
     }
+
+    /**
+     * Called when a wild card is played in the game.
+     * <p>
+     * This method makes the button menu visible when a wild card is played during the game.
+     */
+    @Override
+    public void onWildCardPlayed() {
+        bottonMenu.setVisible(true);
+    }
+
+
+    /**
+     * Sets the game color to red and hides the button menu.
+     * <p>
+     * This method is called when the player selects the "RED" color. It sets the current game color to red
+     * and hides the button menu.
+     *
+     * @param actionEvent the event triggered by the player's action (e.g., clicking a button)
+     */
+    public void setColorRed(ActionEvent actionEvent) {
+        gameUno.setGameColor("RED");
+        bottonMenu.setVisible(false);
+    }
+
+    /**
+     * Sets the game color to blue and hides the button menu.
+     * <p>
+     * This method is called when the player selects the "BLUE" color. It sets the current game color to blue
+     * and hides the button menu.
+     *
+     * @param actionEvent the event triggered by the player's action (e.g., clicking a button)
+     */
+    public void setColorBlue(ActionEvent actionEvent) {
+        gameUno.setGameColor("BLUE");
+        bottonMenu.setVisible(false);
+    }
+
+    /**
+     * Sets the game color to green and hides the button menu.
+     * <p>
+     * This method is called when the player selects the "GREEN" color. It sets the current game color to green
+     * and hides the button menu.
+     *
+     * @param actionEvent the event triggered by the player's action (e.g., clicking a button)
+     */
+    public void setColorGreen(ActionEvent actionEvent) {
+        gameUno.setGameColor("GREEN");
+        bottonMenu.setVisible(false);
+    }
+
+    /**
+     * Sets the game color to yellow and hides the button menu.
+     * <p>
+     * This method is called when the player selects the "YELLOW" color. It sets the current game color to yellow
+     * and hides the button menu.
+     *
+     * @param actionEvent the event triggered by the player's action (e.g., clicking a button)
+     */
+    public void setColorYellow(ActionEvent actionEvent) {
+        gameUno.setGameColor("YELLOW");
+        bottonMenu.setVisible(false);
+    }
+
 }

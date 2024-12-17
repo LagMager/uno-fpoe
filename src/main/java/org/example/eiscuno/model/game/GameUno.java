@@ -18,13 +18,32 @@ public class GameUno implements IGameUno {
     private boolean isReversed;
     private Player currentPlayer;
     private Player nextPlayer;
-
+    private String gameColor;
+    private GameEventListener gameEventListener;
     private static final String NUMBER = "NUMBER";
     private static final String SKIP = "SKIP";
     private static final String REVERSE = "REVERSE";
     private static final String DRAW_TWO = "DRAW_TWO";
     private static final String WILD = "WILD";
     private static final String WILD_DRAW_FOUR = "WILD_DRAW_FOUR";
+
+    /**
+     * Internal interface for handling game events in the {@link GameUno} class.
+     * <p>
+     * This interface defines methods that respond to specific game events, such as
+     * when a wild card is played. It is intended to be implemented by classes that
+     * need to react to game-specific actions within the {@link GameUno} context.
+     */
+    public interface GameEventListener{
+
+        /**
+         * Called when a wild card is played in the game.
+         * <p>
+         * This method is triggered whenever a wild card is played, and implementing
+         * classes should define the appropriate action to take when this event occurs.
+         */
+        void onWildCardPlayed();
+    }
 
     /**
      * Constructs a new GameUno instance.
@@ -57,8 +76,9 @@ public class GameUno implements IGameUno {
                 machinePlayer.addCard(this.deck.takeCard());
             }
         }
-        table.addCardOnTheTable(this.deck.takeCard());
-
+        Card firstCard = this.deck.takeCard();
+        table.addCardOnTheTable(firstCard);
+        setGameColor(firstCard.getColor());
     }
 
     /**
@@ -82,10 +102,10 @@ public class GameUno implements IGameUno {
     @Override
     public void playCard(Card card) {
         if(!canPlayCard(card)) {
-            System.out.println("You can't play this card!");
             return;
         }
 
+        setGameColor(card.getColor());
         table.addCardOnTheTable(card);
         handleCards(card);
         System.out.println("Played card: " + card.getColor() + "/" + card.getValue());
@@ -108,8 +128,15 @@ public class GameUno implements IGameUno {
         } catch (IndexOutOfBoundsException e) {
             return true;
         }
-        return Card.CardValidator.canPlayCard(card, topCard);
+        return Card.CardValidator.canPlayCard(card, topCard, gameColor);
     }
+
+    /**
+     * Switches to the next player after a card has been taken.
+     * <p>
+     * This method is called when a player takes a card, and it triggers the switching
+     * of players to ensure the game progresses. The player turn is updated accordingly.
+     */
     public void cardTaken(){
         switchPlayers();
     }
@@ -152,11 +179,15 @@ public class GameUno implements IGameUno {
                 System.out.println(nextPlayer.getCardsPlayer().size());
                 eatCard(nextPlayer, 4);
                 System.out.println("Now you draw 4!");
+                if (gameEventListener != null) {
+                    gameEventListener.onWildCardPlayed();
+                }
                 System.out.println(nextPlayer.getCardsPlayer().size());
-                switchPlayers();
                 break;
             case WILD:
-                switchPlayers();
+                if (gameEventListener != null) {
+                    gameEventListener.onWildCardPlayed();
+                }
                 break;
         }
     }
@@ -183,12 +214,13 @@ public class GameUno implements IGameUno {
      */
     @Override
     public void haveSungOne(String playerWhoSang) {
-        if (playerWhoSang.equals("HUMAN_PLAYER")) {
+        if (playerWhoSang.equals("HUMAN_PLAYER") && (machinePlayer.getCardsPlayer().size() == 1)) {
             machinePlayer.addCard(this.deck.takeCard());
-        } else {
+        } else if (playerWhoSang.equals("MACHINE_PLAYER") && (humanPlayer.getCardsPlayer().size() == 1)) {
             humanPlayer.addCard(this.deck.takeCard());
         }
-    }
+
+    } //needs to be implemented
 
     /**
      * Retrieves the current visible cards of the human player starting from a specific position.
@@ -208,10 +240,6 @@ public class GameUno implements IGameUno {
 
         return cards;
     }
-    public Card getTableCard() {
-        return table.getCurrentCardOnTheTable();
-    }
-
 
     /**
      * Checks if the game is over.
@@ -225,8 +253,52 @@ public class GameUno implements IGameUno {
                 deck.isEmpty();
     }
 
-    public Player getCurrentPlayer() {return currentPlayer;}
 
+    /**
+     * Retrieves the current player in the game.
+     * <p>
+     * This method returns the {@link Player} object representing the player who is
+     * currently taking their turn in the game.
+     *
+     * @return The {@link Player} representing the current player.
+     */
+    public Player getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    /**
+     * Retrieves the next player in the game.
+     * <p>
+     * This method returns the {@link Player} object representing the player who will
+     * take their turn after the current player.
+     *
+     * @return The {@link Player} representing the next player.
+     */
     public Player getNextPlayer() {return nextPlayer;}
 
+    /**
+     * Sets the game color.
+     * <p>
+     * This method updates the {@code gameColor} variable to the specified color,
+     * which represents the current color used in the game (e.g., for card colors).
+     *
+     * @param color The {@code String} representing the new game color.
+     *              This value is expected to be a valid color name, such as "RED", "GREEN", etc.
+     */
+    public void setGameColor(String color) {
+        gameColor = color;
+    }
+
+    /**
+     * Sets the game event listener.
+     * <p>
+     * This method assigns a {@link GameEventListener} to handle game-related events.
+     * The listener will be used to respond to various game actions or changes.
+     *
+     * @param gameEventListener The {@link GameEventListener} that will handle game events.
+     *                           It is expected to implement the appropriate methods for handling events.
+     */
+    public void setGameEventListener(GameEventListener gameEventListener) {
+        this.gameEventListener = gameEventListener;
+    }
 }
