@@ -2,6 +2,7 @@ package org.example.eiscuno.model.card;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import javafx.application.Platform;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
@@ -42,6 +43,7 @@ class CardTest {
     @Test
     @DisplayName("Should validate card matching correctly")
     void shouldValidateCardMatchingCorrectly() {
+        Platform.startup(()->{});
         Card card1 = new Card("/org/example/eiscuno/cards-uno/0_red.png", "0", "RED", "NUMBER");
         Card card2 = new Card("/org/example/eiscuno/cards-uno/0_blue.png", "0", "BLUE", "NUMBER");
         Card card3 = new Card("/org/example/eiscuno/cards-uno/1_red.png", "1", "RED", "NUMBER");
