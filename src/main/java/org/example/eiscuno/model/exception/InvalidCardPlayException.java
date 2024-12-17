@@ -1,7 +1,6 @@
 package org.example.eiscuno.model.exception;
 
 
-
 /**
  * Exception thrown when a player attempts to play an invalid card in the Uno game.
  * This exception is used to handle cases where a card cannot be played according to Uno rules.
